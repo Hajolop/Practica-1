@@ -1,0 +1,16 @@
+table {
+  border-collapse: collapse;   /* une los bordes en vez de duplicarlos entre celdas */
+}
+
+th, td {
+  border: 1px solid #ccc;      /* línea delgada gris alrededor de cada celda */
+  width: 60px;
+  height: 24px;
+  text-align: center;
+  font-size: 13px;
+  font-family: sans-serif;
+}
+
+th {
+  background-color: #f3f3f3;   /* fondo gris claro para diferenciar encabezados */
+}
