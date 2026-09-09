@@ -90,3 +90,42 @@ for (let f = 1; f <= TOTAL_FILAS; f++) {
 
 
 contenedor.appendChild(tabla);
+// Función auxiliar para validar dígitos
+function esDigito(caracter) {
+  return caracter >= "0" && caracter <= "9";
+}
+
+function tokenizar(formula) {
+  let tokens = [];
+  let numeroActual = "";
+
+  
+  let inicio = formula.startsWith("=") ? 1 : 0;
+
+  for (let i = inicio; i < formula.length; i++) {
+    let caracter = formula[i];
+
+    if (esDigito(caracter)) {
+      // TODO 1: Concatenar el dígito
+      numeroActual = numeroActual + caracter;
+    } else {
+      // TODO 2: Si veníamos acumulando un número, guardarlo antes del operador
+      if (numeroActual !== "") {
+        tokens.push(numeroActual);
+        numeroActual = "";
+      }
+
+      // TODO 3: Agregar el operador o paréntesis si no es un espacio
+      if (caracter !== " ") {
+        tokens.push(caracter);
+      }
+    }
+  }
+
+  
+  if (numeroActual !== "") {
+    tokens.push(numeroActual);
+  }
+
+  return tokens;
+}
