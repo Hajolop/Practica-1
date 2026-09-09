@@ -98,34 +98,93 @@ function esDigito(caracter) {
 function tokenizar(formula) {
   let tokens = [];
   let numeroActual = "";
-
-  
   let inicio = formula.startsWith("=") ? 1 : 0;
-
   for (let i = inicio; i < formula.length; i++) {
     let caracter = formula[i];
-
     if (esDigito(caracter)) {
-      // TODO 1: Concatenar el dígito
       numeroActual = numeroActual + caracter;
     } else {
-      // TODO 2: Si veníamos acumulando un número, guardarlo antes del operador
       if (numeroActual !== "") {
         tokens.push(numeroActual);
         numeroActual = "";
       }
-
-      // TODO 3: Agregar el operador o paréntesis si no es un espacio
       if (caracter !== " ") {
         tokens.push(caracter);
       }
     }
   }
-
-  
   if (numeroActual !== "") {
     tokens.push(numeroActual);
   }
-
   return tokens;
 }
+function precedencia(operador) {
+  if (operador === "+" || operador === "-") {
+    return 1;
+  }
+  if (operador === "*" || operador === "/") {
+    return 2;
+  }
+  return 0;
+}
+
+function aplicarOperacion(operador, izquierdo, derecho) {
+  switch (operador) {
+    case "+":
+      return izquierdo + derecho;
+    case "-":
+      return izquierdo - derecho;
+    case "*":
+      return izquierdo * derecho;
+    case "/":
+      return izquierdo / derecho;
+    default:
+      return 0;
+  }
+}
+function evaluar(tokens) {
+  let pilaNumeros = [];
+  let pilaOperadores = [];
+
+  for (let i = 0; i < tokens.length; i++) {
+    let token = tokens[i];
+
+    // TODO 1: Si el token es un número
+    if (!isNaN(parseFloat(token)) && isFinite(token)) {
+      pilaNumeros.push(parseFloat(token));
+    } 
+    // TODO 2: Si el token es un operador (+, -, *, /)
+    else if (["+", "-", "*", "/"].includes(token)) {
+      // Mientras haya un operador en la pila con mayor o igual precedencia:
+      while (
+        pilaOperadores.length > 0 &&
+        precedencia(pilaOperadores[pilaOperadores.length - 1]) >= precedencia(token)
+      ) {
+        let op = pilaOperadores.pop();
+        let derecho = pilaNumeros.pop();   // 1er pop() -> operando derecho
+        let izquierdo = pilaNumeros.pop(); // 2do pop() -> operando izquierdo
+        
+        let resultado = aplicarOperacion(op, izquierdo, derecho);
+        pilaNumeros.push(resultado);
+      }
+      // Al terminar las operaciones prioritarias, guardamos el operador actual
+      pilaOperadores.push(token);
+    }
+  }
+
+  // TODO 3: Cierre al terminar el ciclo (procesar operadores sobrantes)
+  while (pilaOperadores.length > 0) {
+    let op = pilaOperadores.pop();
+    let derecho = pilaNumeros.pop();   // 1er pop() -> operando derecho
+    let izquierdo = pilaNumeros.pop(); // 2do pop() -> operando izquierdo
+    
+    let resultado = aplicarOperacion(op, izquierdo, derecho);
+    pilaNumeros.push(resultado);
+  }
+
+  // El único elemento que queda es el resultado final de la expresión
+  return pilaNumeros[0];
+}
+console.log(evaluar(tokenizar("3+41*2")));   // esperado: 85
+console.log(evaluar(tokenizar("10-2*3")));   // esperado: 4
+console.log(evaluar(tokenizar("10-2-3")));   // esperado: 5
