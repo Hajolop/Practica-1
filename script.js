@@ -50,12 +50,14 @@ for (let f = 1; f <= TOTAL_FILAS; f++) {
         if (event.key === "Enter") {
           datosHoja[idCelda] = input.value;
           td.textContent = procesarContenidoCelda(input.value);
+          recalcularTodo();
         }
       });
 
       input.addEventListener("blur", function() {
         datosHoja[idCelda] = input.value;
         td.textContent = procesarContenidoCelda(input.value);
+        recalcularTodo();
       });
     });
 
@@ -171,15 +173,8 @@ function evaluar(tokens) {
       }
       pilaOperadores.push(token);
     } else {
-      // ---- NUEVA RAMA: El token es una referencia a celda (ej: "A1") ----
-      
-      // 1. Buscamos el contenido en datosHoja. Si está vacía/undefined, usamos "0"
       let valorGuardado = datosHoja[token] || "0";
-
-      // 2. Evaluamos su contenido (resuelve tanto valores directos como fórmulas anidadas)
       let valorResuelto = procesarContenidoCelda(valorGuardado);
-
-      // 3. Convertimos a número float y apilamos en pilaNumeros
       pilaNumeros.push(parseFloat(valorResuelto));
     }
   }
@@ -194,6 +189,7 @@ function evaluar(tokens) {
 
   return pilaNumeros[0];
 }
+
 function procesarContenidoCelda(texto) {
   let valorFormateado = texto.trim();
 
@@ -209,6 +205,26 @@ function procesarContenidoCelda(texto) {
 
   return valorFormateado;
 }
+
+function recalcularTodo() {
+  for (let f = 1; f <= TOTAL_FILAS; f++) {
+    for (let c = 0; c < TOTAL_COLUMNAS; c++) {
+      let letraColumna = String.fromCharCode(65 + c);
+      let idCelda = letraColumna + f;
+
+      let td = document.getElementById(idCelda);
+      if (!td || td.querySelector("input")) continue;
+
+      let valorGuardado = datosHoja[idCelda];
+      if (valorGuardado !== undefined && valorGuardado !== "") {
+        td.textContent = procesarContenidoCelda(valorGuardado);
+      } else {
+        td.textContent = "";
+      }
+    }
+  }
+}
+
 // ---- Pruebas ----
 console.log(evaluar(tokenizar("3+41*2")));    // esperado: 85
 console.log(evaluar(tokenizar("10-2*3")));    // esperado: 4
@@ -216,8 +232,6 @@ console.log(evaluar(tokenizar("10-2-3")));    // esperado: 5
 console.log(evaluar(tokenizar("(3+4)*2")));   // esperado: 14
 console.log(tokenizar("A12+3"));              // esperado: ["A12", "+", "3"]
 console.log(tokenizar("A1+B2*2"));            // esperado: ["A1", "+", "B2", "*", "2"]
-console.log(tokenizar("A12+3"));              // esperado: ["A12", "+", "3"]
-console.log(tokenizar("A1+B2*2"));            // esperado: ["A1", "+", "B2", "*", "2"]
 datosHoja["A1"] = "10";
 datosHoja["B1"] = "5";
-console.log(evaluar(tokenizar("A1+B1*2"))); // esperado: 20 (10 + 5 * 2)
+console.log(evaluar(tokenizar("A1+B1*2")));   // esperado: 20 (10 + 5 * 2)
