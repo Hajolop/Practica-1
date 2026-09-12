@@ -71,14 +71,14 @@ for (let f = 1; f <= TOTAL_FILAS; f++) {
           datosHoja[idCelda] = input.value;
           
           
-          td.textContent = input.value;
+          td.textContent = procesarContenidoCelda(input.value);
         }
       });
 
       
       input.addEventListener("blur", function() {
         datosHoja[idCelda] = input.value;
-        td.textContent = input.value;
+        td.textContent = procesarContenidoCelda(input.value);
       });
     });
 
@@ -188,3 +188,67 @@ function evaluar(tokens) {
 console.log(evaluar(tokenizar("3+41*2")));   // esperado: 85
 console.log(evaluar(tokenizar("10-2*3")));   // esperado: 4
 console.log(evaluar(tokenizar("10-2-3")));   // esperado: 5
+function evaluar(tokens) {
+  let pilaNumeros = [];
+  let pilaOperadores = [];
+
+  for (let i = 0; i < tokens.length; i++) {
+    let token = tokens[i];
+
+    if (!isNaN(parseFloat(token)) && isFinite(token)) {
+      pilaNumeros.push(parseFloat(token));
+    } 
+    else if (token === "(") {
+      pilaOperadores.push(token);
+    } 
+    else if (token === ")") {
+      while (pilaOperadores.length > 0 && pilaOperadores[pilaOperadores.length - 1] !== "(") {
+        let op = pilaOperadores.pop();
+        let derecho = pilaNumeros.pop();
+        let izquierdo = pilaNumeros.pop();
+        let resultado = aplicarOperacion(op, izquierdo, derecho);
+        pilaNumeros.push(resultado);
+      }
+      pilaOperadores.pop();
+    } 
+    else if (["+", "-", "*", "/"].includes(token)) {
+      while (
+        pilaOperadores.length > 0 &&
+        precedencia(pilaOperadores[pilaOperadores.length - 1]) >= precedencia(token)
+      ) {
+        let op = pilaOperadores.pop();
+        let derecho = pilaNumeros.pop();
+        let izquierdo = pilaNumeros.pop();
+        let resultado = aplicarOperacion(op, izquierdo, derecho);
+        pilaNumeros.push(resultado);
+      }
+      pilaOperadores.push(token);
+    }
+  }
+
+  while (pilaOperadores.length > 0) {
+    let op = pilaOperadores.pop();
+    let derecho = pilaNumeros.pop();
+    let izquierdo = pilaNumeros.pop();
+    let resultado = aplicarOperacion(op, izquierdo, derecho);
+    pilaNumeros.push(resultado);
+  }
+
+  return pilaNumeros[0];
+}
+function procesarContenidoCelda(texto) {
+  let valorFormateado = texto.trim();
+
+  if (valorFormateado.startsWith("=")) {
+    try {
+      let tokens = tokenizar(valorFormateado);
+      let resultado = evaluar(tokens);
+      return resultado;
+    } catch (error) {
+      return error.message || "#ERROR!";
+    }
+  }
+
+  return valorFormateado;
+}
+console.log(evaluar(tokenizar("(3+4)*2")));   // esperado: 14
