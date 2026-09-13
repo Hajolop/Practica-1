@@ -194,10 +194,35 @@ function procesarContenidoCelda(texto) {
   let valorFormateado = texto.trim();
 
   if (valorFormateado.startsWith("=")) {
+    let formula = valorFormateado.slice(1); // Quitamos el '=' inicial
+
     try {
+      let posicionParentesis = formula.indexOf("(");
+
+      // Si tiene '(', procesamos como función de rango (SUMA, PROMEDIO, MAX, MIN)
+      if (posicionParentesis !== -1) {
+        let nombreFuncion = formula.slice(0, posicionParentesis);
+
+        // Extraemos lo que está dentro de los paréntesis (descontando el ')' final)
+        let contenidoParentesis = formula.slice(
+          posicionParentesis + 1,
+          formula.length - 1
+        );
+
+        // Separamos el rango por el caracter ':' (ej: ["A1", "A10"])
+        let partesRango = contenidoParentesis.split(":");
+        let refInicio = partesRango[0];
+        let refFin = partesRango[1];
+
+        // Obtenemos la lista de celdas y aplicamos la función correspondiente
+        let celdas = obtenerCeldasEnRango(refInicio, refFin);
+        return aplicarFuncionRango(nombreFuncion, celdas);
+      }
+
+      // Si no tiene '(', sigue el flujo aritmético estándar
       let tokens = tokenizar(valorFormateado);
       let resultado = evaluar(tokens);
-      return resultado;
+      return resultado !== undefined ? resultado : "#ERROR!";
     } catch (error) {
       return error.message || "#ERROR!";
     }
@@ -342,3 +367,11 @@ console.log(aplicarFuncionRango("SUMA", obtenerCeldasEnRango("A1", "A3")));     
 console.log(aplicarFuncionRango("PROMEDIO", obtenerCeldasEnRango("A1", "A3")));  // esperado: 20
 console.log(aplicarFuncionRango("MAX", obtenerCeldasEnRango("A1", "A3")));       // esperado: 30
 console.log(aplicarFuncionRango("MIN", obtenerCeldasEnRango("A1", "A3")));       // esperado: 10
+datosHoja["A1"] = "10";
+datosHoja["A2"] = "20";
+datosHoja["A3"] = "30";
+
+console.log(procesarContenidoCelda("=SUMA(A1:A3)"));     // Esperado: 60
+console.log(procesarContenidoCelda("=PROMEDIO(A1:A3)")); // Esperado: 20
+console.log(procesarContenidoCelda("=MAX(A1:A3)"));      // Esperado: 30
+console.log(procesarContenidoCelda("=MIN(A1:A3)"));      // Esperado: 10
