@@ -205,7 +205,19 @@ function procesarContenidoCelda(texto) {
 
   return valorFormateado;
 }
-
+function separarColumnaFila(referencia) {
+  let columna = "";
+  let filaTexto = "";
+  for (let i = 0; i < referencia.length; i++) {
+    let caracter = referencia[i];
+    if (esLetra(caracter)) {
+      columna += caracter.toUpperCase();
+    } else if (esDigito(caracter)) {
+      filaTexto += caracter;
+    }
+  }
+  return { columna: columna, fila: Number(filaTexto) };
+}
 function recalcularTodo() {
   for (let f = 1; f <= TOTAL_FILAS; f++) {
     for (let c = 0; c < TOTAL_COLUMNAS; c++) {
@@ -222,7 +234,29 @@ function recalcularTodo() {
         td.textContent = "";
       }
     }
+  }function separarColumnaFila(referencia) {
+  let columna = "";
+  let filaTexto = "";
+
+  for (let i = 0; i < referencia.length; i++) {
+    let caracter = referencia[i];
+
+    // TODO 1: Si es letra, se agrega a la columna (en mayúscula por consistencia)
+    if (esLetra(caracter)) {
+      columna += caracter.toUpperCase();
+    } 
+    // TODO 2: Si es dígito, se agrega al texto de la fila
+    else if (esDigito(caracter)) {
+      filaTexto += caracter;
+    }
   }
+
+  // TODO 3: Se devuelve el objeto con la fila parseada como número
+  return {
+    columna: columna,
+    fila: Number(filaTexto)
+  };
+}
 }
 
 // ---- Pruebas ----
@@ -235,3 +269,5 @@ console.log(tokenizar("A1+B2*2"));            // esperado: ["A1", "+", "B2", "*"
 datosHoja["A1"] = "10";
 datosHoja["B1"] = "5";
 console.log(evaluar(tokenizar("A1+B1*2")));   // esperado: 20 (10 + 5 * 2)
+console.log(separarColumnaFila("A10"));  // esperado: { columna: "A", fila: 10 }
+console.log(separarColumnaFila("J5"));   // esperado: { columna: "J", fila: 5 }
