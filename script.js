@@ -258,7 +258,69 @@ function recalcularTodo() {
   };
 }
 }
+function obtenerCeldasEnRango(refInicio, refFin) {
+  let inicio = separarColumnaFila(refInicio);
+  let fin = separarColumnaFila(refFin);
+  let celdas = [];
 
+  // Recorremos desde la fila inicial hasta la final (inclusive)
+  for (let f = inicio.fila; f <= fin.fila; f++) {
+    // Concatenamos la letra de columna fija con la fila actual
+    let idCelda = inicio.columna + f;
+    celdas.push(idCelda);
+  }
+
+  return celdas;
+}
+function aplicarFuncionRango(nombreFuncion, celdas) {
+  let valores = [];
+
+  // TODO 1: Obtenemos el valor numérico resuelto de cada celda del rango
+  for (let i = 0; i < celdas.length; i++) {
+    let id = celdas[i];
+    let valorTexto = datosHoja[id] || "0";
+    
+    // Resolvemos el contenido (sea un número directo o el resultado de una fórmula)
+    let valorResuelto = procesarContenidoCelda(valorTexto);
+    let numero = Number(valorResuelto);
+
+    // Si la celda contenía un texto no numérico o error, usamos 0 para no romper las cuentas
+    valores.push(isNaN(numero) ? 0 : numero);
+  }
+
+  // TODO 2: Ejecutamos el cálculo según la función solicitada
+  let funcionUpper = nombreFuncion.toUpperCase();
+
+  switch (funcionUpper) {
+    case "SUMA": {
+      let suma = 0;
+      for (let i = 0; i < valores.length; i++) {
+        suma += valores[i];
+      }
+      return suma;
+    }
+
+    case "PROMEDIO": {
+      if (valores.length === 0) return 0;
+      let suma = 0;
+      for (let i = 0; i < valores.length; i++) {
+        suma += valores[i];
+      }
+      return suma / valores.length;
+    }
+
+    case "MAX": {
+      return Math.max(...valores);
+    }
+
+    case "MIN": {
+      return Math.min(...valores);
+    }
+
+    default:
+      return "#NAME?"; // Error típico de Excel si la función no existe
+  }
+}
 // ---- Pruebas ----
 console.log(evaluar(tokenizar("3+41*2")));    // esperado: 85
 console.log(evaluar(tokenizar("10-2*3")));    // esperado: 4
@@ -271,3 +333,12 @@ datosHoja["B1"] = "5";
 console.log(evaluar(tokenizar("A1+B1*2")));   // esperado: 20 (10 + 5 * 2)
 console.log(separarColumnaFila("A10"));  // esperado: { columna: "A", fila: 10 }
 console.log(separarColumnaFila("J5"));   // esperado: { columna: "J", fila: 5 }
+console.log(obtenerCeldasEnRango("A1", "A5"));
+// esperado: ["A1", "A2", "A3", "A4", "A5"]
+datosHoja["A1"] = "10";
+datosHoja["A2"] = "20";
+datosHoja["A3"] = "30";
+console.log(aplicarFuncionRango("SUMA", obtenerCeldasEnRango("A1", "A3")));      // esperado: 60
+console.log(aplicarFuncionRango("PROMEDIO", obtenerCeldasEnRango("A1", "A3")));  // esperado: 20
+console.log(aplicarFuncionRango("MAX", obtenerCeldasEnRango("A1", "A3")));       // esperado: 30
+console.log(aplicarFuncionRango("MIN", obtenerCeldasEnRango("A1", "A3")));       // esperado: 10
