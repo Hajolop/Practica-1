@@ -82,3 +82,55 @@ function recalcularTodo() {
     }
   }
 }
+function generarTextoCSV() {
+  let lineas = [];
+
+  for (let f = 1; f <= TOTAL_FILAS; f++) {
+    let valoresFila = [];
+
+    for (let c = 0; c < TOTAL_COLUMNAS; c++) {
+      // TODO 1: Reconstrucción del idCelda
+      let letraColumna = String.fromCharCode(65 + c);
+      let idCelda = letraColumna + f;
+
+      // TODO 2: Obtención del valor evaluado o string vacío
+      let valorGuardado = datosHoja[idCelda];
+      let valorAMostrar = "";
+
+      if (valorGuardado !== undefined && valorGuardado !== "") {
+        valorAMostrar = procesarContenidoCelda(valorGuardado, idCelda);
+      }
+
+      // TODO 3: Agregamos el valor formateado al array de la fila
+      valoresFila.push(valorAMostrar);
+    }
+
+    // TODO 4: Unimos las columnas de la fila por comas
+    let lineaFila = valoresFila.join(",");
+    lineas.push(lineaFila);
+  }
+
+  // TODO 5: Unimos todas las filas mediante saltos de línea (\n) y retornamos
+  return lineas.join("\n");
+}
+function exportarCSV() {
+  let textoCSV = generarTextoCSV();
+  let blob = new Blob([textoCSV], { type: "text/csv;charset=utf-8;" });
+  let url = URL.createObjectURL(blob);
+
+  let enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.setAttribute("download", "hoja_de_calculo.csv");
+
+  document.body.appendChild(enlace);
+  enlace.click();
+  document.body.removeChild(enlace);
+  URL.revokeObjectURL(url);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  let boton = document.getElementById("boton-exportar");
+  if (boton) {
+    boton.addEventListener("click", exportarCSV);
+  }
+});
