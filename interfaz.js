@@ -134,3 +134,29 @@ document.addEventListener("DOMContentLoaded", () => {
     boton.addEventListener("click", exportarCSV);
   }
 });
+document.addEventListener("DOMContentLoaded", () => {
+  // Conexión del botón de exportar CSV
+  let botonExportar = document.getElementById("boton-exportar");
+  if (botonExportar) {
+    botonExportar.addEventListener("click", exportarCSV);
+  }
+
+  // TODO 4: Búsqueda y conexión del botón "boton-limpiar"
+  let botonLimpiar = document.getElementById("boton-limpiar");
+  if (botonLimpiar) {
+    botonLimpiar.addEventListener("click", limpiarHoja);
+  }
+});
+function limpiarHoja() {
+  let confirmar = confirm("¿Seguro que querés borrar toda la hoja? Esta acción no se puede deshacer.");
+  if (!confirmar) return;
+
+  // TODO 1: Vaciar el objeto de datos en memoria
+  datosHoja = {};
+
+  // TODO 2: Eliminar el registro persistente de localStorage
+  localStorage.removeItem("hojaClaraDatos");
+
+  // TODO 3: Refrescar el DOM para mostrar todas las celdas vacías
+  recalcularTodo();
+}
