@@ -4,9 +4,7 @@ const TOTAL_FILAS = 15;
 const TOTAL_COLUMNAS = 10;
 
 const contenedor = document.getElementById("hoja-calculo");
-
 const tabla = document.createElement("table");
-
 const filaEncabezado = document.createElement("tr");
 
 const celdaEsquina = document.createElement("th");
@@ -18,19 +16,16 @@ for (let c = 0; c < TOTAL_COLUMNAS; c++) {
   th.textContent = String.fromCharCode(65 + c);
   filaEncabezado.appendChild(th);
 }
-
 tabla.appendChild(filaEncabezado);
 
 for (let f = 1; f <= TOTAL_FILAS; f++) {
   const fila = document.createElement("tr");
-
   const thNumero = document.createElement("th");
   thNumero.textContent = f;
   fila.appendChild(thNumero);
 
   for (let c = 0; c < TOTAL_COLUMNAS; c++) {
     const td = document.createElement("td");
-
     const letraColumna = String.fromCharCode(65 + c);
     const idCelda = letraColumna + f;
     td.id = idCelda;
@@ -63,14 +58,11 @@ for (let f = 1; f <= TOTAL_FILAS; f++) {
 
     fila.appendChild(td);
   }
-
   tabla.appendChild(fila);
 }
-
 contenedor.appendChild(tabla);
 
 // ---- Tokenizador ----
-
 function esDigito(caracter) {
   return caracter >= "0" && caracter <= "9";
 }
@@ -111,7 +103,6 @@ function tokenizar(formula) {
       }
     }
   }
-
   if (numeroActual !== "") {
     tokens.push(numeroActual);
   }
@@ -119,7 +110,6 @@ function tokenizar(formula) {
 }
 
 // ---- Evaluador ----
-
 function precedencia(operador) {
   if (operador === "+" || operador === "-") return 1;
   if (operador === "*" || operador === "/") return 2;
@@ -148,10 +138,7 @@ function evaluar(tokens) {
     } else if (token === "(") {
       pilaOperadores.push(token);
     } else if (token === ")") {
-      while (
-        pilaOperadores.length > 0 &&
-        pilaOperadores[pilaOperadores.length - 1] !== "("
-      ) {
+      while (pilaOperadores.length > 0 && pilaOperadores[pilaOperadores.length - 1] !== "(") {
         let op = pilaOperadores.pop();
         let derecho = pilaNumeros.pop();
         let izquierdo = pilaNumeros.pop();
@@ -162,8 +149,7 @@ function evaluar(tokens) {
     } else if (["+", "-", "*", "/"].includes(token)) {
       while (
         pilaOperadores.length > 0 &&
-        precedencia(pilaOperadores[pilaOperadores.length - 1]) >=
-          precedencia(token)
+        precedencia(pilaOperadores[pilaOperadores.length - 1]) >= precedencia(token)
       ) {
         let op = pilaOperadores.pop();
         let derecho = pilaNumeros.pop();
@@ -173,9 +159,12 @@ function evaluar(tokens) {
       }
       pilaOperadores.push(token);
     } else {
-      let valorGuardado = datosHoja[token] || "0";
-      let valorResuelto = procesarContenidoCelda(valorGuardado);
-      pilaNumeros.push(parseFloat(valorResuelto));
+      // Nivel 6, Parte A: referencia a celda vacía o inexistente -> #REF!
+      if (datosHoja[token] === undefined || datosHoja[token].trim() === "") {
+        throw new Error("#REF!");
+      }
+      let valorResuelto = procesarContenidoCelda(datosHoja[token]);
+      pilaNumeros.push(Number(valorResuelto));
     }
   }
 
@@ -190,46 +179,7 @@ function evaluar(tokens) {
   return pilaNumeros[0];
 }
 
-function procesarContenidoCelda(texto) {
-  let valorFormateado = texto.trim();
-
-  if (valorFormateado.startsWith("=")) {
-    let formula = valorFormateado.slice(1); // Quitamos el '=' inicial
-
-    try {
-      let posicionParentesis = formula.indexOf("(");
-
-      // Si tiene '(', procesamos como función de rango (SUMA, PROMEDIO, MAX, MIN)
-      if (posicionParentesis !== -1) {
-        let nombreFuncion = formula.slice(0, posicionParentesis);
-
-        // Extraemos lo que está dentro de los paréntesis (descontando el ')' final)
-        let contenidoParentesis = formula.slice(
-          posicionParentesis + 1,
-          formula.length - 1
-        );
-
-        // Separamos el rango por el caracter ':' (ej: ["A1", "A10"])
-        let partesRango = contenidoParentesis.split(":");
-        let refInicio = partesRango[0];
-        let refFin = partesRango[1];
-
-        // Obtenemos la lista de celdas y aplicamos la función correspondiente
-        let celdas = obtenerCeldasEnRango(refInicio, refFin);
-        return aplicarFuncionRango(nombreFuncion, celdas);
-      }
-
-      // Si no tiene '(', sigue el flujo aritmético estándar
-      let tokens = tokenizar(valorFormateado);
-      let resultado = evaluar(tokens);
-      return resultado !== undefined ? resultado : "#ERROR!";
-    } catch (error) {
-      return error.message || "#ERROR!";
-    }
-  }
-
-  return valorFormateado;
-}
+// ---- Rangos y funciones ----
 function separarColumnaFila(referencia) {
   let columna = "";
   let filaTexto = "";
@@ -243,6 +193,86 @@ function separarColumnaFila(referencia) {
   }
   return { columna: columna, fila: Number(filaTexto) };
 }
+
+function obtenerCeldasEnRango(refInicio, refFin) {
+  let inicio = separarColumnaFila(refInicio);
+  let fin = separarColumnaFila(refFin);
+  let celdas = [];
+  for (let f = inicio.fila; f <= fin.fila; f++) {
+    celdas.push(inicio.columna + f);
+  }
+  return celdas;
+}
+
+function aplicarFuncionRango(nombreFuncion, celdas) {
+  let valores = [];
+  for (let i = 0; i < celdas.length; i++) {
+    let id = celdas[i];
+    let valorTexto = datosHoja[id] || "0";
+    let valorResuelto = procesarContenidoCelda(valorTexto);
+    let numero = Number(valorResuelto);
+    valores.push(isNaN(numero) ? 0 : numero);
+  }
+
+  let funcionUpper = nombreFuncion.toUpperCase();
+  switch (funcionUpper) {
+    case "SUMA": {
+      let suma = 0;
+      for (let i = 0; i < valores.length; i++) suma += valores[i];
+      return suma;
+    }
+    case "PROMEDIO": {
+      if (valores.length === 0) return 0;
+      let suma = 0;
+      for (let i = 0; i < valores.length; i++) suma += valores[i];
+      return suma / valores.length;
+    }
+    case "MAX":
+      return Math.max(...valores);
+    case "MIN":
+      return Math.min(...valores);
+    default:
+      return "#NAME?";
+  }
+}
+
+// ---- Procesar contenido de celda ----
+function procesarContenidoCelda(texto) {
+  let valorFormateado = texto.trim();
+
+  if (valorFormateado.startsWith("=")) {
+    let formula = valorFormateado.slice(1);
+
+    try {
+      let posicionParentesis = formula.indexOf("(");
+
+      if (posicionParentesis !== -1) {
+        let nombreFuncion = formula.slice(0, posicionParentesis);
+        let contenidoParentesis = formula.slice(posicionParentesis + 1, formula.length - 1);
+        let partesRango = contenidoParentesis.split(":");
+        let refInicio = partesRango[0];
+        let refFin = partesRango[1];
+        let celdas = obtenerCeldasEnRango(refInicio, refFin);
+        return aplicarFuncionRango(nombreFuncion, celdas);
+      }
+
+      let tokens = tokenizar(valorFormateado);
+      let resultado = evaluar(tokens);
+
+      // Nivel 6, Parte B: fórmula mal escrita -> #ERROR!
+      if (resultado === undefined || isNaN(resultado)) {
+        return "#ERROR!";
+      }
+      return resultado;
+    } catch (error) {
+      return error.message || "#ERROR!";
+    }
+  }
+
+  return valorFormateado;
+}
+
+// ---- Recalcular toda la hoja ----
 function recalcularTodo() {
   for (let f = 1; f <= TOTAL_FILAS; f++) {
     for (let c = 0; c < TOTAL_COLUMNAS; c++) {
@@ -259,93 +289,9 @@ function recalcularTodo() {
         td.textContent = "";
       }
     }
-  }function separarColumnaFila(referencia) {
-  let columna = "";
-  let filaTexto = "";
-
-  for (let i = 0; i < referencia.length; i++) {
-    let caracter = referencia[i];
-
-    // TODO 1: Si es letra, se agrega a la columna (en mayúscula por consistencia)
-    if (esLetra(caracter)) {
-      columna += caracter.toUpperCase();
-    } 
-    // TODO 2: Si es dígito, se agrega al texto de la fila
-    else if (esDigito(caracter)) {
-      filaTexto += caracter;
-    }
-  }
-
-  // TODO 3: Se devuelve el objeto con la fila parseada como número
-  return {
-    columna: columna,
-    fila: Number(filaTexto)
-  };
-}
-}
-function obtenerCeldasEnRango(refInicio, refFin) {
-  let inicio = separarColumnaFila(refInicio);
-  let fin = separarColumnaFila(refFin);
-  let celdas = [];
-
-  // Recorremos desde la fila inicial hasta la final (inclusive)
-  for (let f = inicio.fila; f <= fin.fila; f++) {
-    // Concatenamos la letra de columna fija con la fila actual
-    let idCelda = inicio.columna + f;
-    celdas.push(idCelda);
-  }
-
-  return celdas;
-}
-function aplicarFuncionRango(nombreFuncion, celdas) {
-  let valores = [];
-
-  // TODO 1: Obtenemos el valor numérico resuelto de cada celda del rango
-  for (let i = 0; i < celdas.length; i++) {
-    let id = celdas[i];
-    let valorTexto = datosHoja[id] || "0";
-    
-    // Resolvemos el contenido (sea un número directo o el resultado de una fórmula)
-    let valorResuelto = procesarContenidoCelda(valorTexto);
-    let numero = Number(valorResuelto);
-
-    // Si la celda contenía un texto no numérico o error, usamos 0 para no romper las cuentas
-    valores.push(isNaN(numero) ? 0 : numero);
-  }
-
-  // TODO 2: Ejecutamos el cálculo según la función solicitada
-  let funcionUpper = nombreFuncion.toUpperCase();
-
-  switch (funcionUpper) {
-    case "SUMA": {
-      let suma = 0;
-      for (let i = 0; i < valores.length; i++) {
-        suma += valores[i];
-      }
-      return suma;
-    }
-
-    case "PROMEDIO": {
-      if (valores.length === 0) return 0;
-      let suma = 0;
-      for (let i = 0; i < valores.length; i++) {
-        suma += valores[i];
-      }
-      return suma / valores.length;
-    }
-
-    case "MAX": {
-      return Math.max(...valores);
-    }
-
-    case "MIN": {
-      return Math.min(...valores);
-    }
-
-    default:
-      return "#NAME?"; // Error típico de Excel si la función no existe
   }
 }
+
 // ---- Pruebas ----
 console.log(evaluar(tokenizar("3+41*2")));    // esperado: 85
 console.log(evaluar(tokenizar("10-2*3")));    // esperado: 4
@@ -353,25 +299,17 @@ console.log(evaluar(tokenizar("10-2-3")));    // esperado: 5
 console.log(evaluar(tokenizar("(3+4)*2")));   // esperado: 14
 console.log(tokenizar("A12+3"));              // esperado: ["A12", "+", "3"]
 console.log(tokenizar("A1+B2*2"));            // esperado: ["A1", "+", "B2", "*", "2"]
+
 datosHoja["A1"] = "10";
 datosHoja["B1"] = "5";
-console.log(evaluar(tokenizar("A1+B1*2")));   // esperado: 20 (10 + 5 * 2)
-console.log(separarColumnaFila("A10"));  // esperado: { columna: "A", fila: 10 }
-console.log(separarColumnaFila("J5"));   // esperado: { columna: "J", fila: 5 }
-console.log(obtenerCeldasEnRango("A1", "A5"));
-// esperado: ["A1", "A2", "A3", "A4", "A5"]
-datosHoja["A1"] = "10";
-datosHoja["A2"] = "20";
-datosHoja["A3"] = "30";
-console.log(aplicarFuncionRango("SUMA", obtenerCeldasEnRango("A1", "A3")));      // esperado: 60
-console.log(aplicarFuncionRango("PROMEDIO", obtenerCeldasEnRango("A1", "A3")));  // esperado: 20
-console.log(aplicarFuncionRango("MAX", obtenerCeldasEnRango("A1", "A3")));       // esperado: 30
-console.log(aplicarFuncionRango("MIN", obtenerCeldasEnRango("A1", "A3")));       // esperado: 10
-datosHoja["A1"] = "10";
-datosHoja["A2"] = "20";
-datosHoja["A3"] = "30";
+console.log(evaluar(tokenizar("A1+B1*2")));   // esperado: 20
 
-console.log(procesarContenidoCelda("=SUMA(A1:A3)"));     // Esperado: 60
-console.log(procesarContenidoCelda("=PROMEDIO(A1:A3)")); // Esperado: 20
-console.log(procesarContenidoCelda("=MAX(A1:A3)"));      // Esperado: 30
-console.log(procesarContenidoCelda("=MIN(A1:A3)"));      // Esperado: 10
+console.log(separarColumnaFila("A10"));       // esperado: { columna: "A", fila: 10 }
+console.log(obtenerCeldasEnRango("A1", "A5")); // esperado: ["A1","A2","A3","A4","A5"]
+
+datosHoja["A2"] = "20";
+datosHoja["A3"] = "30";
+console.log(procesarContenidoCelda("=SUMA(A1:A3)"));     // esperado: 60
+console.log(procesarContenidoCelda("=PROMEDIO(A1:A3)")); // esperado: 20
+
+console.log(procesarContenidoCelda("=Z99+5"));  // esperado: "#REF!"
