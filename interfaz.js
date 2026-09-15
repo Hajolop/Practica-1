@@ -28,6 +28,8 @@ for (let f = 1; f <= TOTAL_FILAS; f++) {
     td.addEventListener("dblclick", function() {
       if (td.querySelector("input")) return;
 
+      td.classList.add("celda-seleccionada");
+
       const input = document.createElement("input");
       input.type = "text";
       input.value = datosHoja[idCelda] || "";
@@ -36,21 +38,19 @@ for (let f = 1; f <= TOTAL_FILAS; f++) {
       td.appendChild(input);
       input.focus();
 
-      input.addEventListener("keydown", function(event) {
-        if (event.key === "Enter") {
-          datosHoja[idCelda] = input.value;
-          td.textContent = procesarContenidoCelda(input.value, idCelda);
-          recalcularTodo();
-          guardarEnLocalStorage();
-        }
-      });
-
-      input.addEventListener("blur", function() {
+      function guardarEdicion() {
         datosHoja[idCelda] = input.value;
         td.textContent = procesarContenidoCelda(input.value, idCelda);
+        td.classList.remove("celda-seleccionada");
         recalcularTodo();
         guardarEnLocalStorage();
+      }
+
+      input.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") guardarEdicion();
       });
+
+      input.addEventListener("blur", guardarEdicion);
     });
 
     fila.appendChild(td);
@@ -82,6 +82,7 @@ function recalcularTodo() {
     }
   }
 }
+
 function generarTextoCSV() {
   let lineas = [];
 
@@ -89,11 +90,9 @@ function generarTextoCSV() {
     let valoresFila = [];
 
     for (let c = 0; c < TOTAL_COLUMNAS; c++) {
-      // TODO 1: Reconstrucción del idCelda
       let letraColumna = String.fromCharCode(65 + c);
       let idCelda = letraColumna + f;
 
-      // TODO 2: Obtención del valor evaluado o string vacío
       let valorGuardado = datosHoja[idCelda];
       let valorAMostrar = "";
 
@@ -101,18 +100,15 @@ function generarTextoCSV() {
         valorAMostrar = procesarContenidoCelda(valorGuardado, idCelda);
       }
 
-      // TODO 3: Agregamos el valor formateado al array de la fila
       valoresFila.push(valorAMostrar);
     }
 
-    // TODO 4: Unimos las columnas de la fila por comas
-    let lineaFila = valoresFila.join(",");
-    lineas.push(lineaFila);
+    lineas.push(valoresFila.join(","));
   }
 
-  // TODO 5: Unimos todas las filas mediante saltos de línea (\n) y retornamos
   return lineas.join("\n");
 }
+
 function exportarCSV() {
   let textoCSV = generarTextoCSV();
   let blob = new Blob([textoCSV], { type: "text/csv;charset=utf-8;" });
@@ -128,35 +124,23 @@ function exportarCSV() {
   URL.revokeObjectURL(url);
 }
 
+function limpiarHoja() {
+  let confirmar = confirm("¿Seguro que querés borrar toda la hoja? Esta acción no se puede deshacer.");
+  if (!confirmar) return;
+
+  datosHoja = {};
+  localStorage.removeItem("hojaClaraDatos");
+  recalcularTodo();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  let boton = document.getElementById("boton-exportar");
-  if (boton) {
-    boton.addEventListener("click", exportarCSV);
-  }
-});
-document.addEventListener("DOMContentLoaded", () => {
-  // Conexión del botón de exportar CSV
   let botonExportar = document.getElementById("boton-exportar");
   if (botonExportar) {
     botonExportar.addEventListener("click", exportarCSV);
   }
 
-  // TODO 4: Búsqueda y conexión del botón "boton-limpiar"
   let botonLimpiar = document.getElementById("boton-limpiar");
   if (botonLimpiar) {
     botonLimpiar.addEventListener("click", limpiarHoja);
   }
 });
-function limpiarHoja() {
-  let confirmar = confirm("¿Seguro que querés borrar toda la hoja? Esta acción no se puede deshacer.");
-  if (!confirmar) return;
-
-  // TODO 1: Vaciar el objeto de datos en memoria
-  datosHoja = {};
-
-  // TODO 2: Eliminar el registro persistente de localStorage
-  localStorage.removeItem("hojaClaraDatos");
-
-  // TODO 3: Refrescar el DOM para mostrar todas las celdas vacías
-  recalcularTodo();
-}

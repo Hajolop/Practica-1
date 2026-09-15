@@ -14,3 +14,15 @@ th, td {
 th {
   background-color: #f3f3f3;   /* fondo gris claro para diferenciar encabezados */
 }
+.celda-seleccionada {
+  background-color: #ff4d4d !important; /* Rojo vivo de fondo */
+  outline: 3px solid #cc0000;           /* Borde rojo oscuro grueso */
+  color: #ffffff;                      /* Texto blanco para buen contraste */
+}
+
+/* Para que el texto que escribes dentro del input también sea visible */
+.celda-seleccionada input {
+  background-color: transparent;
+  color: #ffffff;
+  font-weight: bold;
+}
