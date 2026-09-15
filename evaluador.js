@@ -99,7 +99,16 @@ function evaluar(tokens) {
       if (datosHoja[token] === undefined || datosHoja[token].trim() === "") {
         throw new Error("#REF!");
       }
-      let valorResuelto = procesarContenidoCelda(datosHoja[token]);
+      // Nivel 6, Parte C: pasamos "token" como idCeldaActual para detectar ciclos
+      let valorResuelto = procesarContenidoCelda(datosHoja[token], token);
+
+      // Si la celda referenciada ya devolvió un error, propagarlo
+      // en vez de intentar convertirlo a número (evita perder el
+      // mensaje específico, como "#CIRC!", detrás de un "#ERROR!" genérico)
+      if (typeof valorResuelto === "string" && valorResuelto.startsWith("#")) {
+        throw new Error(valorResuelto);
+      }
+
       pilaNumeros.push(Number(valorResuelto));
     }
   }
@@ -172,11 +181,20 @@ function aplicarFuncionRango(nombreFuncion, celdas) {
   }
 }
 
-// ---- Procesar contenido de celda ----
-function procesarContenidoCelda(texto) {
+// ---- Procesar contenido de celda (con deteccion de referencias circulares) ----
+let pilaEvaluacion = [];
+
+function procesarContenidoCelda(texto, idCeldaActual) {
   let valorFormateado = texto.trim();
 
   if (valorFormateado.startsWith("=")) {
+    if (idCeldaActual) {
+      if (pilaEvaluacion.includes(idCeldaActual)) {
+        throw new Error("#CIRC!");
+      }
+      pilaEvaluacion.push(idCeldaActual);
+    }
+
     let formula = valorFormateado.slice(1);
 
     try {
@@ -195,13 +213,19 @@ function procesarContenidoCelda(texto) {
       let tokens = tokenizar(valorFormateado);
       let resultado = evaluar(tokens);
 
-      // Nivel 6, Parte B: fórmula mal escrita -> #ERROR!
       if (resultado === undefined || isNaN(resultado)) {
         return "#ERROR!";
       }
       return resultado;
     } catch (error) {
       return error.message || "#ERROR!";
+    } finally {
+      if (idCeldaActual) {
+        let posicion = pilaEvaluacion.indexOf(idCeldaActual);
+        if (posicion !== -1) {
+          pilaEvaluacion.splice(posicion, 1);
+        }
+      }
     }
   }
 

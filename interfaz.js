@@ -39,14 +39,14 @@ for (let f = 1; f <= TOTAL_FILAS; f++) {
       input.addEventListener("keydown", function(event) {
         if (event.key === "Enter") {
           datosHoja[idCelda] = input.value;
-          td.textContent = procesarContenidoCelda(input.value);
+          td.textContent = procesarContenidoCelda(input.value, idCelda);
           recalcularTodo();
         }
       });
 
       input.addEventListener("blur", function() {
         datosHoja[idCelda] = input.value;
-        td.textContent = procesarContenidoCelda(input.value);
+        td.textContent = procesarContenidoCelda(input.value, idCelda);
         recalcularTodo();
       });
     });
@@ -65,13 +65,14 @@ function recalcularTodo() {
     for (let c = 0; c < TOTAL_COLUMNAS; c++) {
       let letraColumna = String.fromCharCode(65 + c);
       let idCelda = letraColumna + f;
-
       let td = document.getElementById(idCelda);
+
       if (!td || td.querySelector("input")) continue;
 
       let valorGuardado = datosHoja[idCelda];
+
       if (valorGuardado !== undefined && valorGuardado !== "") {
-        td.textContent = procesarContenidoCelda(valorGuardado);
+        td.textContent = procesarContenidoCelda(valorGuardado, idCelda);
       } else {
         td.textContent = "";
       }
