@@ -95,16 +95,11 @@ function evaluar(tokens) {
       }
       pilaOperadores.push(token);
     } else {
-      // Nivel 6, Parte A: referencia a celda vacía o inexistente -> #REF!
       if (datosHoja[token] === undefined || datosHoja[token].trim() === "") {
         throw new Error("#REF!");
       }
-      // Nivel 6, Parte C: pasamos "token" como idCeldaActual para detectar ciclos
       let valorResuelto = procesarContenidoCelda(datosHoja[token], token);
 
-      // Si la celda referenciada ya devolvió un error, propagarlo
-      // en vez de intentar convertirlo a número (evita perder el
-      // mensaje específico, como "#CIRC!", detrás de un "#ERROR!" genérico)
       if (typeof valorResuelto === "string" && valorResuelto.startsWith("#")) {
         throw new Error(valorResuelto);
       }
@@ -230,4 +225,22 @@ function procesarContenidoCelda(texto, idCeldaActual) {
   }
 
   return valorFormateado;
+}
+
+// ---- Nivel 7: Persistencia con localStorage ----
+function guardarEnLocalStorage() {
+  localStorage.setItem("hojaClaraDatos", JSON.stringify(datosHoja));
+}
+
+function cargarDesdeLocalStorage() {
+  let guardado = localStorage.getItem("hojaClaraDatos");
+
+  if (guardado !== null) {
+    try {
+      datosHoja = JSON.parse(guardado);
+    } catch (e) {
+      console.error("Error al parsear los datos de localStorage:", e);
+      datosHoja = {};
+    }
+  }
 }

@@ -41,6 +41,7 @@ for (let f = 1; f <= TOTAL_FILAS; f++) {
           datosHoja[idCelda] = input.value;
           td.textContent = procesarContenidoCelda(input.value, idCelda);
           recalcularTodo();
+          guardarEnLocalStorage();
         }
       });
 
@@ -48,6 +49,7 @@ for (let f = 1; f <= TOTAL_FILAS; f++) {
         datosHoja[idCelda] = input.value;
         td.textContent = procesarContenidoCelda(input.value, idCelda);
         recalcularTodo();
+        guardarEnLocalStorage();
       });
     });
 
@@ -57,7 +59,8 @@ for (let f = 1; f <= TOTAL_FILAS; f++) {
 }
 contenedor.appendChild(tabla);
 
-
+cargarDesdeLocalStorage();
+recalcularTodo();
 
 // ---- Recalcular toda la hoja ----
 function recalcularTodo() {
