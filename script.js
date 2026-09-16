@@ -22,3 +22,4 @@ console.log(procesarContenidoCelda("=SUMA(A1:A3)"));     // esperado: 60
 console.log(procesarContenidoCelda("=PROMEDIO(A1:A3)")); // esperado: 20
 
 console.log(procesarContenidoCelda("=Z99+5"));  // esperado: "#REF!"
+console.log(generarTextoCSV());
