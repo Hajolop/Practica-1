@@ -20,3 +20,7 @@ Bienvenido a **HojaClara**, una hoja de cálculo web ligera desarrollada con HTM
 ### 4. Cómo Ejecutar el Proyecto
 1. Clona el repositorio: `git clone https://github.com/Hajolop/Practica-1.git`
 2. Abre el archivo `index.html` en cualquier navegador web moderno (Chrome, Edge, Firefox).# HojaClara - Práctica de curso
+
+## Video Explicativo
+En el siguiente enlace se encuentra la demostración en vivo y la explicación técnica del proyecto:
+- [Ver Video en Loom](https://www.loom.com/share/444a64613c1349a1a27a679b7c84699b)
